@@ -1,0 +1,27 @@
+{
+  "name": "clawforge",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@clawforge/web",
+    "dev:api": "cd apps/api && uv run uvicorn clawforge.main:app --reload --port 8000",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "api:install": "cd apps/api && uv sync",
+    "prepare": "turbo run prepare"
+  },
+  "devDependencies": {
+    "@clawforge/config": "workspace:*",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

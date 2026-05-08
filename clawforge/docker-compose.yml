@@ -1,0 +1,86 @@
+version: "3.9"
+
+services:
+  # Next.js Web Application
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+    depends_on:
+      - api
+    networks:
+      - clawforge-network
+
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_DEBUG=true
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - USE_LOCAL_LLM=true
+      - DATABASE_URL=sqlite+aiosqlite:///./clawforge.db
+      - CHROMA_PERSIST_DIR=/app/data/chroma_db
+    volumes:
+      - ./apps/api:/app
+      - api-data:/app/data
+    depends_on:
+      - ollama
+    networks:
+      - clawforge-network
+
+  # Ollama for Local LLM
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - clawforge-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # For Apple Silicon, remove the deploy section above
+
+  # ChromaDB for RAG
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=false
+    networks:
+      - clawforge-network
+
+networks:
+  clawforge-network:
+    driver: bridge
+
+volumes:
+  api-data:
+  ollama-data:
+  chroma-data:
